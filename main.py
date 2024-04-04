@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 import os
 import time
+import pwd
 
 import cv2
 from napi import NapiPy
-import pwd
 
 
 def clear_screen():
@@ -117,8 +117,9 @@ def download_subtitles():
     print("    klikając w nagłówek kolumny 'CZAS TRWANIA'")
     print("  - Jeśli jest kilka pasujących wyników, wybierz ten z największą ilością pobrań")
     print("5. Kliknij prawym przyciskiem myszy na nazwę pliku i wybierz 'Kopiuj odnośnik' (https://imgur.com/a/fPSGycC)")
-    print("6. Wklej skopiowany hash poniżej (CTRL+SHIFT+V) i naciśnij Enter")
+    print("6. Wklej skopiowany hash poniżej (CTRL+SHIFT+V)")
     print("  - Hash powinien wyglądać tak: 'napiprojekt:1234567890abcdef1234567890abcdef'")
+    print("7. Naciśnij Enter")
 
     hash = input("\nHash: ")
     hash = hash.strip()
@@ -155,6 +156,85 @@ def print_welcome_message():
             print("Cześć kochana Mamusiu! :*")
         case _:
             print(f"Witaj {usr}!")
+
+def install_fonts():
+    font_path = None
+    font_paths = set()
+
+    while font_path != "":
+        clear_screen()
+        print("1. Pobierz interesujące Cię czcionki z internetu. Wymaganym formatem jest .ttf lub .otf")
+        print("  - https://fonts.google.com/")
+        print("  - https://www.dafont.com/")
+        print("  - https://www.fontsquirrel.com/")
+        print("  - https://www.fontspace.com/")
+        print("  - https://www.urbanfonts.com/")
+        print("  - https://www.1001freefonts.com/")
+        print("  - https://www.myfonts.com/")
+        print("2. Pojedynczo przeciągaj i upuszczaj pobrane pliki .otf i .ttf tutaj")
+        print("3. Naciśnij Enter po każdym upuszczonym pliku")
+        print("4. Po zakończeniu naciśnij Enter jeszcze raz")
+
+        if len(font_paths) > 0:
+          print("\nDodane czcionki:")
+          for font in font_paths:
+            print(f"- {font.split('/')[-1]}")
+            
+
+        font_path = input("\nCzcionka: ")
+        font_path = font_path.strip()
+        font_path = font_path.strip("'")
+
+        if font_path == "":
+            break
+
+        if not os.path.exists(font_path):
+            clear_screen()
+            print("Podany plik nie istnieje")
+            input("Naciśnij Enter aby kontynuować...")
+            continue
+        
+        if os.path.isdir(font_path):
+            clear_screen()
+            print("Podano folder zamiast pliku")
+            input("Naciśnij Enter aby kontynuować...")
+            continue
+        
+        if not font_path.endswith(".ttf") and not font_path.endswith(".otf"):
+            clear_screen()
+            print("Podany plik nie jest obsługiwanymi czcionkami .ttf lub .otf")
+            input("Naciśnij Enter aby kontynuować...")
+            continue
+        
+        font_paths.add(font_path)
+
+    if len(font_paths) == 0:
+        clear_screen()
+        print("Nie dodano żadnych czcionek")
+        input("Naciśnij Enter aby kontynuować...")
+        return
+        
+    otfs = [font for font in font_paths if font.endswith(".otf")]
+    ttfs = [font for font in font_paths if font.endswith(".ttf")]
+
+    if len(otfs) > 0:
+        clear_screen()
+        os.system("sudo mkdir -p /usr/share/fonts/opentype/installed")
+        for otf in otfs:
+            os.system(f"sudo cp -n {otf} /usr/share/fonts/opentype/installed/")
+
+    if len(ttfs) > 0:
+        clear_screen()
+        os.system("sudo mkdir -p /usr/share/fonts/truetype/installed")
+        for ttf in ttfs:
+            os.system(f"sudo cp -n {ttf} /usr/share/fonts/truetype/installed/")
+
+    clear_screen()
+    os.system("sudo fc-cache -f -v")
+
+    clear_screen()
+    print("Zainstalowano wybrane czcionki! Możesz usunąć pobrane pliki czcionek")
+    input("Naciśnij Enter aby kontynuować...")
             
 
 def main():
@@ -195,6 +275,7 @@ def main():
               options.append({"label": "Włącz Plex", "action": start_plex})
 
         options.append({"label": "Pobierz napisy", "action": download_subtitles})
+        options.append({"label": "Zainstaluj czcionki", "action": install_fonts})
 
         for i, option in enumerate(options):
             print(f"{i}. {option['label']}")
