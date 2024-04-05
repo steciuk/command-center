@@ -11,17 +11,43 @@ def clear_screen():
     os.system("clear")
 
 
+def path_dnd_input(*prompts, dir=False, allow_empty=False):
+    path = input("\n".join(prompts))
+    path = path.strip().strip("'")
+
+    if allow_empty and path == "":
+        return path
+
+    if dir:
+        if not os.path.exists(path):
+            raise FileNotFoundError("Podany folder nie istnieje")
+        if not os.path.isdir(path):
+            raise NotADirectoryError("Podano plik zamiast folderu")
+    else:
+        if not os.path.exists(path):
+            raise FileNotFoundError("Podany plik nie istnieje")
+        if os.path.isdir(path):
+            raise IsADirectoryError("Podano folder zamiast pliku")
+
+    return path
+
+
+def press_enter_to_continue(message):
+    clear_screen()
+    print(message)
+    input("Naciśnij Enter aby kontynuować...")
+
+
 def schedule_shutdown():
     clear_screen()
     num_hours = input("Za ile godzin wyłączyć komputer? (0 - wróć): ")
+
     try:
         num_hours = int(num_hours)
-        if num_hours < 0:
-            return
     except ValueError:
         return
 
-    if num_hours == 0:
+    if num_hours <= 0:
         return
 
     os.system(f"shutdown +{num_hours * 60}")
@@ -30,11 +56,14 @@ def schedule_shutdown():
 def cancel_shutdown():
     os.system("shutdown -c")
 
+
 def is_plex_present():
-  return os.system("systemctl list-unit-files | grep plexmediaserver.service") == 0
+    return os.system("systemctl list-unit-files | grep plexmediaserver.service") == 0
+
 
 def is_plex_running():
     return os.system("systemctl is-active --quiet plexmediaserver") == 0
+
 
 def start_plex():
     clear_screen()
@@ -59,7 +88,7 @@ def shutdown_scheduled_in_hours():
     return None
 
 
-def secods_to_hh_mm_ss(seconds):
+def seconds_to_hh_mm_ss(seconds):
     return time.strftime("%H:%M:%S", time.gmtime(seconds))
 
 
@@ -70,7 +99,7 @@ def display_movie_fps_and_duration(path):
 
     duration = frame_count / fps
 
-    duration = secods_to_hh_mm_ss(duration)
+    duration = seconds_to_hh_mm_ss(duration)
 
     print(f"FPS: {fps:.3f}")
     print(f"Czas trwania: {duration}")
@@ -78,72 +107,74 @@ def display_movie_fps_and_duration(path):
 
 def download_subtitles():
     clear_screen()
-    print("1. Przeciągnij i upuść tutaj plik filmu")
-    print("2. Naciśnij Enter")
-    movie_path = input("\nPlik: ")
-    movie_path = movie_path.strip()
-    movie_path = movie_path.strip("'")
 
-    if not os.path.exists(movie_path):
-        clear_screen()
-        print("Podany plik nie istnieje")
-        input("Naciśnij Enter aby kontynuować...")
-        return
+    try:
+        movie_path = path_dnd_input(
+            "1. Przeciągnij i upuść tutaj plik filmu",
+            "2. Naciśnij Enter",
+            "Plik: ",
+            dir=False,
+        )
+    except Exception as e:
+        return press_enter_to_continue(str(e))
 
-    if os.path.isdir(movie_path):
-        clear_screen()
-        print("Podano folder zamiast pliku")
-        input("Naciśnij Enter aby kontynuować...")
-        return
+    napi = NapiPy()
+    hash = napi.calc_hash(movie_path)
+
+    _, _, subtitles = napi.download_subs(hash)
+
+    if subtitles:
+        napi.move_subs_to_movie(subtitles, movie_path)
+        return press_enter_to_continue("Poprawnie pobrano napisy!")
 
     clear_screen()
+    print("Nie udało się dopasować napisów automatycznie, spróbuj ręcznie\n")
     try:
         display_movie_fps_and_duration(movie_path)
     except Exception as _:
-        clear_screen()
-        print("Podany plik najprawdopodobniej nie jest filmem, bądź jest uszkodzony")
-        input("Naciśnij Enter aby kontynuować...")
-        return
+        return press_enter_to_continue(
+            "Podany plik najprawdopodobniej nie jest filmem, jest uszkodzony, bądź ma nieobsługiwany format"
+        )
 
-    print("\n1. Wejdź na stronę https://www.napiprojekt.pl/napisy-szukaj")
-    print("2. Wyszukaj film po tytule i wybierz pasujący wynik (https://imgur.com/a/yIAA3zG)")
-    print("  - Upewnij się, że tytuł i rok filmu są zgodne z tymi z pliku")
-    print("  - Jeśli nie ma wyników, spróbuj wyszukać po angielskim (lub polskim) tytule")
-    print("  - Czasem po wybraniu wyniku napiprojekt otwiera nową stronę z reklamą,")
-    print("    wtedy wróć do poprzedniej strony i ponów próbę wybrania wyniku")
-    print("3. Kliknij przycisk 'napisy' (https://imgur.com/a/k2fVPjo)")
-    print("4. Dopasuj napisy do czasu trwania i FPS filmu (https://imgur.com/a/GR0Hw1z)")
-    print("  - Najłatwiej posortować wyniki po czasie trwania,")
-    print("    klikając w nagłówek kolumny 'CZAS TRWANIA'")
-    print("  - Jeśli jest kilka pasujących wyników, wybierz ten z największą ilością pobrań")
-    print("5. Kliknij prawym przyciskiem myszy na nazwę pliku i wybierz 'Kopiuj odnośnik' (https://imgur.com/a/fPSGycC)")
-    print("6. Wklej skopiowany hash poniżej (CTRL+SHIFT+V)")
-    print("  - Hash powinien wyglądać tak: 'napiprojekt:1234567890abcdef1234567890abcdef'")
-    print("7. Naciśnij Enter")
+    print(
+        "\n".join(
+            [
+                "",
+                "1. Wejdź na stronę https://www.napiprojekt.pl/napisy-szukaj",
+                "2. Wyszukaj film po tytule i wybierz pasujący wynik (https://imgur.com/a/yIAA3zG)",
+                "  - Upewnij się, że tytuł i rok filmu są zgodne z tymi z pliku",
+                "  - Jeśli nie ma wyników, spróbuj wyszukać po angielskim (lub polskim) tytule",
+                "  - Czasem po wybraniu wyniku napiprojekt otwiera nową stronę z reklamą,",
+                "    wtedy wróć do poprzedniej strony i ponów próbę wybrania wyniku",
+                "3. Kliknij przycisk 'napisy' (https://imgur.com/a/k2fVPjo)",
+                "4. Dopasuj napisy do czasu trwania i FPS filmu (https://imgur.com/a/GR0Hw1z)",
+                "  - Najłatwiej posortować wyniki po czasie trwania,",
+                "    klikając w nagłówek kolumny 'CZAS TRWANIA'",
+                "  - Jeśli jest kilka pasujących wyników, wybierz ten z największą ilością pobrań",
+                "5. Kliknij prawym przyciskiem myszy na nazwę pliku i wybierz 'Kopiuj odnośnik' (https://imgur.com/a/fPSGycC)",
+                "6. Wklej skopiowany hash poniżej (CTRL+SHIFT+V)",
+                "  - Hash powinien wyglądać tak: 'napiprojekt:1234567890abcdef1234567890abcdef'",
+                "7. Naciśnij Enter",
+                "",
+            ]
+        )
+    )
 
-    hash = input("\nHash: ")
+    hash = input("Hash: ")
     hash = hash.strip()
     if hash.startswith("napiprojekt:"):
         hash = hash.split(":")[1]
 
     if len(hash) != 32:
-        clear_screen()
-        print("Podano nieprawidłowy hash")
-        input("Naciśnij Enter aby kontynuować...")
-        return
+        return press_enter_to_continue("Podano niepoprawny hash")
 
-    try:
-        napi = NapiPy()
-        _, _, subtitles = napi.download_subs(hash)
-        subs_path = napi.move_subs_to_movie(subtitles, movie_path)
-    except Exception as _:
-        clear_screen()
-        print("Nie udało się pobrać napisów")
-        input("Naciśnij Enter aby kontynuować...")
+    _, _, subtitles = napi.download_subs(hash)
 
-    clear_screen()
-    print("Poprawnie pobrano napisy!")
-    input("Naciśnij Enter aby kontynuować...")
+    if subtitles:
+        napi.move_subs_to_movie(subtitles, movie_path)
+        return press_enter_to_continue("Poprawnie pobrano napisy!")
+
+    press_enter_to_continue("Nie udało się pobrać napisów")
 
 
 def print_welcome_message():
@@ -157,63 +188,58 @@ def print_welcome_message():
         case _:
             print(f"Witaj {usr}!")
 
+
 def install_fonts():
     font_path = None
     font_paths = set()
 
     while font_path != "":
         clear_screen()
-        print("1. Pobierz interesujące Cię czcionki z internetu. Wymaganym formatem jest .ttf lub .otf")
-        print("  - https://fonts.google.com/")
-        print("  - https://www.dafont.com/")
-        print("  - https://www.fontsquirrel.com/")
-        print("  - https://www.fontspace.com/")
-        print("  - https://www.urbanfonts.com/")
-        print("  - https://www.1001freefonts.com/")
-        print("  - https://www.myfonts.com/")
-        print("2. Pojedynczo przeciągaj i upuszczaj pobrane pliki .otf i .ttf tutaj")
-        print("3. Naciśnij Enter po każdym upuszczonym pliku")
-        print("4. Po zakończeniu naciśnij Enter jeszcze raz")
+        print(
+            "\n".join(
+                [
+                    "1. Pobierz interesujące Cię czcionki z internetu. Wymaganym formatem jest .ttf lub .otf",
+                    "  - https://fonts.google.com/",
+                    "  - https://www.dafont.com/",
+                    "  - https://www.fontsquirrel.com/",
+                    "  - https://www.fontspace.com/",
+                    "  - https://www.urbanfonts.com/",
+                    "  - https://www.1001freefonts.com/",
+                    "  - https://www.myfonts.com/",
+                    "2. Pojedynczo przeciągaj i upuszczaj pobrane pliki .otf i .ttf tutaj",
+                    "3. Naciśnij Enter po każdym upuszczonym pliku",
+                    "4. Po zakończeniu naciśnij Enter jeszcze raz",
+                ]
+            )
+        )
 
         if len(font_paths) > 0:
-          print("\nDodane czcionki:")
-          for font in font_paths:
-            print(f"- {font.split('/')[-1]}")
-            
+            print("\nDodane czcionki:")
+            for font in font_paths:
+                print(f"- {font.split('/')[-1]}")
 
-        font_path = input("\nCzcionka: ")
-        font_path = font_path.strip()
-        font_path = font_path.strip("'")
+        try:
+            font_path = path_dnd_input(
+                "", "Plik czcionki: ", allow_empty=True, dir=False
+            )
+        except Exception as e:
+            press_enter_to_continue(str(e))
+            continue
 
         if font_path == "":
             break
 
-        if not os.path.exists(font_path):
-            clear_screen()
-            print("Podany plik nie istnieje")
-            input("Naciśnij Enter aby kontynuować...")
-            continue
-        
-        if os.path.isdir(font_path):
-            clear_screen()
-            print("Podano folder zamiast pliku")
-            input("Naciśnij Enter aby kontynuować...")
-            continue
-        
         if not font_path.endswith(".ttf") and not font_path.endswith(".otf"):
-            clear_screen()
-            print("Podany plik nie jest obsługiwanymi czcionkami .ttf lub .otf")
-            input("Naciśnij Enter aby kontynuować...")
+            press_enter_to_continue(
+                "Podany plik nie jest obsługiwanymi czcionkami .ttf lub .otf"
+            )
             continue
-        
+
         font_paths.add(font_path)
 
     if len(font_paths) == 0:
-        clear_screen()
-        print("Nie dodano żadnych czcionek")
-        input("Naciśnij Enter aby kontynuować...")
-        return
-        
+        return press_enter_to_continue("Nie wybrano żadnych czcionek")
+
     otfs = [font for font in font_paths if font.endswith(".otf")]
     ttfs = [font for font in font_paths if font.endswith(".ttf")]
 
@@ -232,10 +258,10 @@ def install_fonts():
     clear_screen()
     os.system("sudo fc-cache -f -v")
 
-    clear_screen()
-    print("Zainstalowano wybrane czcionki! Możesz usunąć pobrane pliki czcionek")
-    input("Naciśnij Enter aby kontynuować...")
-            
+    press_enter_to_continue(
+        "Zainstalowano wybrane czcionki! Możesz usunąć pobrane pliki czcionek"
+    )
+
 
 def main():
     last_selected = None
@@ -252,7 +278,7 @@ def main():
         if shutdown_schedule_time:
             print(f"Wyłączenie komputera zaplanowane na {shutdown_schedule_time}")
         if plex_present:
-          print(f"Plex: {'ON' if plex_running else 'OFF'}")
+            print(f"Plex: {'ON' if plex_running else 'OFF'}")
         print("===========================================")
 
         options = []
@@ -269,10 +295,10 @@ def main():
             )
 
         if plex_present:
-          if plex_running:
-              options.append({"label": "Wyłącz Plex", "action": stop_plex})
-          else:
-              options.append({"label": "Włącz Plex", "action": start_plex})
+            if plex_running:
+                options.append({"label": "Wyłącz Plex", "action": stop_plex})
+            else:
+                options.append({"label": "Włącz Plex", "action": start_plex})
 
         options.append({"label": "Pobierz napisy", "action": download_subtitles})
         options.append({"label": "Zainstaluj czcionki", "action": install_fonts})
