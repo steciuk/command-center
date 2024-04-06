@@ -5,6 +5,7 @@ import pwd
 
 import cv2
 from napi import NapiPy
+from pypdf import PdfMerger
 
 
 def clear_screen():
@@ -190,53 +191,65 @@ def print_welcome_message():
             print(f"Witaj {usr}!")
 
 
-def install_fonts():
-    font_path = None
-    font_paths = set()
+def multiple_files_input(prompt, allowed_extensions=[]):
+    file_path = None
+    file_paths = set()
+    file_paths_in_order = []
 
-    while font_path != "":
+    while file_path != "":
         clear_screen()
-        print(
-            "\n".join(
-                [
-                    "1. Pobierz interesujące Cię czcionki z internetu. Wymaganym formatem jest .ttf lub .otf",
-                    "  - https://fonts.google.com/",
-                    "  - https://www.dafont.com/",
-                    "  - https://www.fontsquirrel.com/",
-                    "  - https://www.fontspace.com/",
-                    "  - https://www.urbanfonts.com/",
-                    "  - https://www.1001freefonts.com/",
-                    "  - https://www.myfonts.com/",
-                    "2. Pojedynczo przeciągaj i upuszczaj pobrane pliki .otf i .ttf tutaj",
-                    "3. Naciśnij Enter po każdym upuszczonym pliku",
-                    "4. Po zakończeniu naciśnij Enter jeszcze raz",
-                ]
-            )
-        )
+        print(prompt)
 
-        if len(font_paths) > 0:
-            print("\nDodane czcionki:")
-            for font in font_paths:
-                print(f"- {font.split('/')[-1]}")
+        if len(file_paths_in_order) > 0:
+            print("\nDodane pliki:")
+            for file in file_paths_in_order:
+                print(f"- {file.split('/')[-1]}")
 
         try:
-            font_path = path_dnd_input(
-                "", "Plik czcionki: ", allow_empty=True, dir=False
-            )
+            file_path = path_dnd_input("", "Plik: ", allow_empty=True, dir=False)
         except Exception as e:
             press_enter_to_continue(str(e))
             continue
 
-        if font_path == "":
+        if file_path == "":
             break
 
-        if not font_path.endswith(".ttf") and not font_path.endswith(".otf"):
-            press_enter_to_continue(
-                "Podany plik nie jest obsługiwanymi czcionkami .ttf lub .otf"
-            )
+        if len(allowed_extensions) > 0:
+            if not any(file_path.endswith(ext) for ext in allowed_extensions):
+                press_enter_to_continue(
+                    f"Podany plik nie jest obsługiwanym plikiem: {', '.join(allowed_extensions)}"
+                )
+                continue
+
+        if file_path in file_paths:
+            press_enter_to_continue("Podany plik został już dodany")
             continue
 
-        font_paths.add(font_path)
+        file_paths.add(file_path)
+        file_paths_in_order.append(file_path)
+
+    return file_paths_in_order
+
+
+def install_fonts():
+    font_paths = multiple_files_input(
+        "\n".join(
+            [
+                "1. Pobierz interesujące Cię czcionki z internetu. Wymaganym formatem jest .ttf lub .otf",
+                "  - https://fonts.google.com/",
+                "  - https://www.dafont.com/",
+                "  - https://www.fontsquirrel.com/",
+                "  - https://www.fontspace.com/",
+                "  - https://www.urbanfonts.com/",
+                "  - https://www.1001freefonts.com/",
+                "  - https://www.myfonts.com/",
+                "2. Pojedynczo przeciągaj i upuszczaj pobrane pliki .otf i .ttf tutaj",
+                "3. Naciśnij Enter po każdym upuszczonym pliku",
+                "4. Po zakończeniu naciśnij Enter jeszcze raz",
+            ]
+        ),
+        [".ttf", ".otf"],
+    )
 
     if len(font_paths) == 0:
         return press_enter_to_continue("Nie wybrano żadnych czcionek")
@@ -248,13 +261,13 @@ def install_fonts():
         clear_screen()
         os.system("sudo mkdir -p /usr/share/fonts/opentype/installed")
         for otf in otfs:
-            os.system(f"sudo cp -n {otf} /usr/share/fonts/opentype/installed/")
+            os.system(f"sudo cp -n '{otf}' /usr/share/fonts/opentype/installed/")
 
     if len(ttfs) > 0:
         clear_screen()
         os.system("sudo mkdir -p /usr/share/fonts/truetype/installed")
         for ttf in ttfs:
-            os.system(f"sudo cp -n {ttf} /usr/share/fonts/truetype/installed/")
+            os.system(f"sudo cp -n '{ttf}' /usr/share/fonts/truetype/installed/")
 
     clear_screen()
     os.system("sudo fc-cache -f -v")
@@ -269,14 +282,17 @@ def update_script():
     PYTHON_PATH = os.path.join(SCRIPT_PATH, ".venv/bin/python3")
 
     clear_screen()
-    requirements_path = path_dnd_input(
-        "1. Żeby zaktualizować skrypt, potrzebny jest plik 'main.py' oraz opcjonalnie 'requirements.txt'",
-        "2. Jeśli posiadasz plik 'requirements.txt', przeciągnij i upuść go tutaj i naciśnij Enter, w przeciwnym wypadku po prostu naciśnij Enter",
-        "",
-        "Plik: ",
-        dir=False,
-        allow_empty=True,
-    )
+    try:
+        requirements_path = path_dnd_input(
+            "1. Żeby zaktualizować skrypt, potrzebny jest plik 'main.py' oraz opcjonalnie 'requirements.txt'",
+            "2. Jeśli posiadasz plik 'requirements.txt', przeciągnij i upuść go tutaj i naciśnij Enter, w przeciwnym wypadku po prostu naciśnij Enter",
+            "",
+            "Plik: ",
+            dir=False,
+            allow_empty=True,
+        )
+    except Exception as e:
+        return press_enter_to_continue(str(e))
 
     if requirements_path != "":
         if not requirements_path.endswith("requirements.txt"):
@@ -285,22 +301,173 @@ def update_script():
             )
 
         clear_screen()
-        os.system(f"{PYTHON_PATH} -m pip install -r {requirements_path}")
+        os.system(f"{PYTHON_PATH} -m pip install -r '{requirements_path}'")
 
     clear_screen()
-    main_path = path_dnd_input(
-        "1. Przeciągnij i upuść plik 'main.py' tutaj",
-        "2. Naciśnij Enter",
-        dir=False,
-    )
+    try:
+        main_path = path_dnd_input(
+            "1. Przeciągnij i upuść plik 'main.py' tutaj",
+            "2. Naciśnij Enter",
+            "",
+            "Plik: ",
+            dir=False,
+        )
+    except Exception as e:
+        return press_enter_to_continue(str(e))
 
     if not main_path.endswith("main.py"):
         return press_enter_to_continue("Podany plik nie jest plikiem 'main.py'")
 
-    os.system(f"cp {main_path} {SCRIPT_PATH}")
+    os.system(f"cp '{main_path}' {SCRIPT_PATH}")
 
     press_enter_to_continue("Zaktualizowano skrypt!\nUruchom skrypt ponownie")
     exit()
+
+
+def merge_pdfs(document_paths=[]):
+    if len(document_paths) == 0:
+        document_paths = multiple_files_input(
+            "\n".join(
+                [
+                    "1. Pojedynczo przeciągaj i upuszczaj pliki do połączenia tutaj",
+                    "  - Wspierane formaty: .pdf",
+                    "2. Naciśnij Enter po każdym upuszczonym pliku",
+                    "3. Po zakończeniu naciśnij Enter jeszcze raz",
+                ]
+            ),
+            [".pdf"],
+        )
+
+        if len(document_paths) == 0:
+            return press_enter_to_continue("Nie wybrano żadnych dokumentów")
+
+    clear_screen()
+    try:
+        output_path = path_dnd_input(
+            "1. Przeciągnij i upuść folder, do którego ma być zapisany plik PDF",
+            "2. Naciśnij Enter",
+            "",
+            "Folder: ",
+            dir=True,
+        )
+    except Exception as e:
+        return press_enter_to_continue(str(e))
+
+    clear_screen()
+    file_name = input("Podaj nazwę pliku wyjściowego: ")
+    file_name = file_name.strip()
+    if file_name == "":
+        return press_enter_to_continue("Nie podano nazwy pliku wyjściowego")
+
+    if not file_name.endswith(".pdf"):
+        file_name += ".pdf"
+
+    merger = PdfMerger()
+    for document_path in document_paths:
+        merger.append(document_path)
+
+    merger.write(os.path.join(output_path, file_name))
+    merger.close()
+
+    press_enter_to_continue("Poprawnie połączono dokumenty w jeden plik PDF!")
+
+
+def convert_to_pdf(save=True):
+    document_paths = multiple_files_input(
+        "\n".join(
+            [
+                "1. Pojedynczo przeciągaj i upuszczaj pliki do konwersji tutaj",
+                "  - Wspierane formaty: .doc, .docx, .odt, .odf",
+                "2. Naciśnij Enter po każdym upuszczonym pliku",
+                "3. Po zakończeniu naciśnij Enter jeszcze raz",
+            ]
+        ),
+        [".doc", ".docx", ".odt", ".odf"],
+    )
+
+    if len(document_paths) == 0:
+        return press_enter_to_continue("Nie wybrano żadnych dokumentów")
+
+    if save:
+        clear_screen()
+        try:
+            output_dir = path_dnd_input(
+                "1. Przeciągnij i upuść folder, do którego mają być zapisane pliki PDF",
+                "2. Naciśnij Enter",
+                "",
+                "Folder: ",
+                dir=True,
+            )
+        except Exception as e:
+            return press_enter_to_continue(str(e))
+    else:
+        output_dir = "/tmp/command_center"
+
+    clear_screen()
+    try:
+        escaped_document_paths = [f"'{doc}'" for doc in document_paths]
+        command = f"lowriter --convert-to pdf {' '.join(escaped_document_paths)} --outdir '{output_dir}'"
+        os.system(command)
+    except Exception as e:
+        return press_enter_to_continue(str(e))
+
+    if save:
+        press_enter_to_continue("Poprawnie skonwertowano dokumenty do PDF!")
+
+    output_files = [
+        os.path.join(output_dir, ".".join(doc.split("/")[-1].split(".")[:-1]) + ".pdf")
+        for doc in document_paths
+    ]
+    return output_files
+
+
+def convert_and_merge():
+    converted_files = convert_to_pdf(save=False)
+
+    if converted_files is None or len(converted_files) == 0:
+        return press_enter_to_continue("Nie udało się skonwertować dokumentów do PDF")
+
+    merge_pdfs(converted_files)
+
+
+def pdfs_manager():
+    clear_screen()
+    last_selected = None
+
+    while True:
+        clear_screen()
+        print("Witaj w menedżerze PDFów!")
+        print("===========================================")
+
+        options = []
+
+        options.append({"label": "Wróć", "action": lambda: None})
+        options.append({"label": "Połącz dokumenty PDF", "action": merge_pdfs})
+        options.append(
+            {"label": "Konwertuj dokumenty do PDF", "action": convert_to_pdf}
+        )
+        options.append(
+            {
+                "label": "Konwertuj dokumenty do PDF i połącz",
+                "action": convert_and_merge,
+            }
+        )
+
+        for i, option in enumerate(options):
+            print(f"{i}. {option['label']}")
+
+        last_selected = input("\nWybierz opcję i naciśnij Enter: ")
+
+        try:
+            last_selected = int(last_selected)
+            if last_selected == 0:
+                return
+            if last_selected < 0 or last_selected >= len(options):
+                continue
+        except ValueError:
+            continue
+
+        options[last_selected]["action"]()
 
 
 def main():
@@ -343,6 +510,7 @@ def main():
         options.append({"label": "Pobierz napisy", "action": download_subtitles})
         options.append({"label": "Zainstaluj czcionki", "action": install_fonts})
         options.append({"label": "Zaktualizuj skrypt", "action": update_script})
+        options.append({"label": "Zarządzaj PDFami", "action": pdfs_manager})
 
         for i, option in enumerate(options):
             print(f"{i}. {option['label']}")
@@ -360,4 +528,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        press_enter_to_continue(f"{str(e)}\n\nWystąpił krytyczny błąd")
