@@ -106,7 +106,7 @@ def display_movie_fps_and_duration(path):
     print(f"Czas trwania: {duration}")
 
 
-def download_subtitles():
+def download_subtitles_auto():
     clear_screen()
 
     try:
@@ -131,6 +131,26 @@ def download_subtitles():
 
     clear_screen()
     print("Nie udało się dopasować napisów automatycznie, spróbuj ręcznie\n")
+    download_subtitles_manual(movie_path)
+
+
+def download_subtitles_manual(movie_path=None):
+    if movie_path is None:
+        clear_screen()
+
+        try:
+            movie_path = path_dnd_input(
+                "1. Przeciągnij i upuść tutaj plik filmu",
+                "2. Naciśnij Enter",
+                "",
+                "Plik: ",
+                dir=False,
+            )
+        except Exception as e:
+            return press_enter_to_continue(str(e))
+
+        clear_screen()
+
     try:
         display_movie_fps_and_duration(movie_path)
     except Exception as _:
@@ -170,6 +190,7 @@ def download_subtitles():
     if len(hash) != 32:
         return press_enter_to_continue("Podano niepoprawny hash")
 
+    napi = NapiPy()
     _, _, subtitles = napi.download_subs(hash)
 
     if subtitles:
@@ -177,6 +198,41 @@ def download_subtitles():
         return press_enter_to_continue("Poprawnie pobrano napisy!")
 
     press_enter_to_continue("Nie udało się pobrać napisów")
+
+
+def subtitles_downloader():
+    clear_screen()
+    print("Witaj w pobieraczu napisów!")
+    print("===========================================")
+
+    options = []
+
+    options.append({"label": "Wróć", "action": lambda: None})
+    options.append(
+        {"label": "Pobierz napisy automatycznie", "action": download_subtitles_auto}
+    )
+    options.append(
+        {"label": "Pobierz napisy ręcznie", "action": download_subtitles_manual}
+    )
+
+    for i, option in enumerate(options):
+        print(f"{i}. {option['label']}")
+
+    last_selected = input("\nWybierz opcję i naciśnij Enter: ")
+
+    try:
+        last_selected = int(last_selected)
+        if last_selected == 0:
+            return
+        if last_selected < 0 or last_selected >= len(options):
+            return
+    except ValueError:
+        return
+
+    try:
+        options[last_selected]["action"]()
+    except Exception as e:
+        press_enter_to_continue(f"{str(e)}\n\nWystąpił krytyczny błąd")
 
 
 def print_welcome_message():
@@ -467,7 +523,10 @@ def pdfs_manager():
         except ValueError:
             continue
 
-        options[last_selected]["action"]()
+        try:
+            options[last_selected]["action"]()
+        except Exception as e:
+            press_enter_to_continue(f"{str(e)}\n\nWystąpił krytyczny błąd")
 
 
 def main():
@@ -507,7 +566,7 @@ def main():
             else:
                 options.append({"label": "Włącz Plex", "action": start_plex})
 
-        options.append({"label": "Pobierz napisy", "action": download_subtitles})
+        options.append({"label": "Pobierz napisy", "action": subtitles_downloader})
         options.append({"label": "Zainstaluj czcionki", "action": install_fonts})
         options.append({"label": "Zaktualizuj skrypt", "action": update_script})
         options.append({"label": "Zarządzaj PDFami", "action": pdfs_manager})
@@ -524,11 +583,11 @@ def main():
         except ValueError:
             continue
 
-        options[last_selected]["action"]()
+        try:
+            options[last_selected]["action"]()
+        except Exception as e:
+            press_enter_to_continue(f"{str(e)}\n\nWystąpił krytyczny błąd")
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        press_enter_to_continue(f"{str(e)}\n\nWystąpił krytyczny błąd")
+    main()
