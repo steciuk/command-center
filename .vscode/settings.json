@@ -1,11 +1,15 @@
 {
   "cSpell.words": [
+    "getuid",
     "gmtime",
+    "lowriter",
     "napi",
     "napiprojekt",
     "otfs",
+    "outdir",
     "pdfs",
     "plexmediaserver",
+    "pobieraczu",
     "Polciu",
     "pypdf",
     "ttfs"
