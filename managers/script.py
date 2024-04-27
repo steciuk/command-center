@@ -40,7 +40,9 @@ class ScriptGitUpdater:
         return os.system("which git > /dev/null") == 0
 
     def __run_git_command(self, command):
-        return os.system(f"git --git-dir={os.path.join(ROOT_DIR, '.git')} {command}")
+        return os.system(
+            f"git --git-dir={os.path.join(ROOT_DIR, '.git')} --work-tree={ROOT_DIR} {command}"
+        )
 
     def __check_updates_available(self):
         if self.__run_git_command("fetch") != 0:
@@ -60,11 +62,18 @@ class ScriptGitUpdater:
     def __update_script(self):
         python_path = os.path.join(ROOT_DIR, ".venv/bin/python3")
 
-        if self.__run_git_command("reset --hard") != 0:
+        if self.__run_git_command("reset --hard origin/main") != 0:
             press_enter_to_continue("Nie udało się zaktualizować skryptu")
             return
 
-        os.system(f"{python_path} -m pip install -r requirements.txt")
+        if (
+            os.system(
+                f"{python_path} -m pip install -r {os.path.join(ROOT_DIR, 'requirements.txt')}"
+            )
+            != 0
+        ):
+            press_enter_to_continue("Nie udało się zaktualizować zależności")
+            return
 
         press_enter_to_continue("Zaktualizowano!\nUruchom skrypt ponownie")
         exit()
