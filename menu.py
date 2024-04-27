@@ -99,6 +99,9 @@ class Menu:
             for footer in self.__footers_to_show
         ]
 
+        self.__footers_to_show.append("↑ ↓ - poruszanie się")
+        self.__footers_to_show.append("Enter - wybierz")
+
         self.__options_to_show = [
             {
                 "type": option["type"],

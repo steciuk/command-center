@@ -37,8 +37,8 @@ def main():
         lambda: shutdown_manager.scheduled,
     ).with_submenu(
         "Pobierz napisy", subtitles_downloader.menu
-    ).with_action(
-        "Zainstaluj czcionki", fonts_manager.install_fonts
+    ).with_submenu(
+        "Zarządzaj czcionkami", fonts_manager.menu
     ).with_submenu(
         "Zarządzaj PDFami", pdfs_manager.menu
     ).with_action(

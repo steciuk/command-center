@@ -1,9 +1,70 @@
 import os
 
+from menu import Menu
+from multi_select import MultiSelect
 from utils import clear_screen, multiple_files_input, press_enter_to_continue
 
 
 class FontManager:
+    def __init__(self) -> None:
+        self.__otf_path = "/usr/share/fonts/opentype/installed"
+        self.__ttf_path = "/usr/share/fonts/truetype/installed"
+
+        self.menu = (
+            Menu()
+            .with_header("Witaj w menedżerze czcionek!")
+            .with_return()
+            .with_action("Zainstaluj czcionki", self.install_fonts)
+            .with_action("Odinstaluj czcionki", self.uninstall_fonts)
+        )
+
+    def uninstall_fonts(self):
+        clear_screen()
+        ttfs = (
+            [
+                os.path.join(self.__ttf_path, file)
+                for file in os.listdir(self.__ttf_path)
+                if file.endswith(".ttf")
+            ]
+            if os.path.exists(self.__ttf_path)
+            else []
+        )
+        ttfs = [file for file in ttfs if os.path.isfile(file)]
+        ttfs = sorted(ttfs)
+        otfs = (
+            [
+                os.path.join(self.__otf_path, file)
+                for file in os.listdir(self.__otf_path)
+                if file.endswith(".otf")
+            ]
+            if os.path.exists(self.__otf_path)
+            else []
+        )
+        otfs = [file for file in otfs if os.path.isfile(file)]
+        otfs = sorted(otfs)
+
+        if len(ttfs) == 0 and len(otfs) == 0:
+            return press_enter_to_continue("Brak zainstalowanych czcionek")
+
+        files = ttfs + otfs
+
+        multi_select = MultiSelect(
+            [{"label": file.split("/")[-1], "value": file} for file in files],
+            header="Wybierz czcionki do odinstalowania",
+        )
+        selected_files = multi_select.get()
+
+        if len(selected_files) == 0:
+            return press_enter_to_continue("Nie wybrano żadnych czcionek")
+
+        clear_screen()
+        for file in selected_files:
+            os.system(f"sudo rm '{file}'")
+
+        clear_screen()
+        self.__refresh_fonts()
+        press_enter_to_continue("Odinstalowano wybrane czcionki")
+
     def install_fonts(self):
         font_paths = multiple_files_input(
             "1. Pobierz interesujące Cię czcionki z internetu. Wymaganym formatem jest .ttf lub .otf",
@@ -28,19 +89,22 @@ class FontManager:
 
         if len(otfs) > 0:
             clear_screen()
-            os.system("sudo mkdir -p /usr/share/fonts/opentype/installed")
+            os.system(f"sudo mkdir -p {self.__otf_path}")
             for otf in otfs:
-                os.system(f"sudo cp -n '{otf}' /usr/share/fonts/opentype/installed/")
+                os.system(f"sudo cp -n '{otf}' {self.__otf_path}/")
 
         if len(ttfs) > 0:
             clear_screen()
-            os.system("sudo mkdir -p /usr/share/fonts/truetype/installed")
+            os.system(f"sudo mkdir -p {self.__ttf_path}")
             for ttf in ttfs:
-                os.system(f"sudo cp -n '{ttf}' /usr/share/fonts/truetype/installed/")
+                os.system(f"sudo cp -n '{ttf}' {self.__ttf_path}/")
 
-        clear_screen()
-        os.system("sudo fc-cache -f -v")
+        self.__refresh_fonts()
 
         press_enter_to_continue(
             "Zainstalowano wybrane czcionki! Możesz usunąć pobrane pliki czcionek"
         )
+
+    def __refresh_fonts(self):
+        clear_screen()
+        os.system("sudo fc-cache -f -v")

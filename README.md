@@ -5,7 +5,7 @@ A Python/curses console application I created for my dad, who bravely switched f
 This handy tool offers a range of utilities specially tailored for my dad:
 - Schedule computer shutdown
 - Automatically or manually download Polish subtitles from [napiprojekt](https://www.napiprojekt.pl/)
-- Install `OTF` and `TTF` fonts in the system
+- Install `OTF` and `TTF` fonts (or uninstall previously installed ones)
 - Convert `.doc`, `.docx`, `.odt`, `.odf` files to PDF
 - Merge multiple PDF files into one
 - Turn [Plex](https://www.plex.tv/) on or off (if installed)
