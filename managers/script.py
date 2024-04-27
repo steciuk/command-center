@@ -40,20 +40,28 @@ class ScriptGitUpdater:
         return os.system("which git > /dev/null") == 0
 
     def __check_updates_available(self):
-        os.system("git fetch")
+        if os.system("git fetch") != 0:
+            press_enter_to_continue(
+                "Nie udało się sprawdzić dostępnych aktualizacji\nCzy sklonowałeś repozytorium?"
+            )
+            return
 
-        diff_output = os.popen("git diff HEAD origin/master").read()
+        diff_output = os.popen("git diff HEAD origin/main").read()
         if diff_output:
             self.__are_updates = True
         else:
             press_enter_to_continue("Brak dostępnych aktualizacji")
 
     def __update_script(self):
-        SCRIPT_PATH = os.path.dirname(__file__)
-        PYTHON_PATH = os.path.join(SCRIPT_PATH, ".venv/bin/python3")
+        python_path = os.path.join(os.path.dirname(__file__), ".venv/bin/python3")
 
-        os.system("git pull")
-        os.system(f"{PYTHON_PATH} -m pip install -r requirements.txt")
+        if os.system("git pull") != 0:
+            press_enter_to_continue("Nie udało się zaktualizować skryptu")
+            return
+
+        if os.system(f"{python_path} -m pip install -r requirements.txt") != 0:
+            press_enter_to_continue("Nie udało się zainstalować wymaganych pakietów")
+            return
 
         press_enter_to_continue("Zaktualizowano!\nUruchom skrypt ponownie")
         exit()
