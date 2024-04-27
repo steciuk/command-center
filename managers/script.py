@@ -52,7 +52,7 @@ class ScriptGitUpdater:
             return
 
         are_updates = self.__run_git_command(
-            "diff --raw HEAD origin/main | (test ! -s && exit 1)"
+            "diff --raw HEAD origin/main | (test ! -s && exit 1 || exit 0)"
         )
         if are_updates:
             self.__are_updates = True
