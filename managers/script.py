@@ -59,9 +59,7 @@ class ScriptGitUpdater:
             press_enter_to_continue("Nie udało się zaktualizować skryptu")
             return
 
-        if os.system(f"{python_path} -m pip install -r requirements.txt") != 0:
-            press_enter_to_continue("Nie udało się zainstalować wymaganych pakietów")
-            return
+        os.system(f"{python_path} -m pip install -r requirements.txt")
 
         press_enter_to_continue("Zaktualizowano!\nUruchom skrypt ponownie")
         exit()
