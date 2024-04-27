@@ -58,7 +58,7 @@ class ScriptGitUpdater:
             press_enter_to_continue("Brak dostępnych aktualizacji")
 
     def __update_script(self):
-        python_path = os.path.join(os.path.dirname(__file__), ".venv/bin/python3")
+        python_path = os.path.join(ROOT_DIR, ".venv/bin/python3")
 
         if self.__run_git_command("reset --hard") != 0:
             press_enter_to_continue("Nie udało się zaktualizować skryptu")
