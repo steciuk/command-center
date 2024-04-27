@@ -1,50 +1,59 @@
 import os
-from utils import clear_screen, path_dnd_input, press_enter_to_continue
+from menu import Menu
+from utils import press_enter_to_continue
 
 
-class ScriptUpdater:
-    def update_script(self):
+class ScriptGitUpdater:
+    def __init__(self) -> None:
+        self.__are_updates = False
+
+        if not self.__is_git_installed():
+            self.menu = (
+                Menu()
+                .with_header(
+                    "Do zaktualizowania skryptu wymagane jest zainstalowanie Git'a"
+                )
+                .with_return()
+            )
+        else:
+            self.menu = (
+                Menu()
+                .with_header("Witaj w menedżerze aktualizacji skryptu!")
+                .with_header(
+                    "===========================================",
+                    condition=lambda: self.__are_updates,
+                )
+                .with_header(
+                    "Dostępna jest nowa wersja skryptu!",
+                    condition=lambda: self.__are_updates,
+                )
+                .with_return()
+                .with_action(
+                    "Sprawdź dostępność aktualizacji", self.__check_updates_available
+                )
+                .with_action(
+                    "Zaktualizuj skrypt",
+                    self.__update_script,
+                    condition=lambda: self.__are_updates,
+                )
+            )
+
+    def __is_git_installed(self):
+        return os.system("which git > /dev/null") == 0
+
+    def __check_updates_available(self):
+        os.system("git fetch")
+
+        diff_output = os.popen("git diff HEAD origin/master").read()
+        if diff_output:
+            self.__are_updates = True
+
+    def __update_script(self):
         SCRIPT_PATH = os.path.dirname(__file__)
         PYTHON_PATH = os.path.join(SCRIPT_PATH, ".venv/bin/python3")
 
-        clear_screen()
-        try:
-            requirements_path = path_dnd_input(
-                "1. Żeby zaktualizować skrypt, potrzebny jest plik 'main.py' oraz opcjonalnie 'requirements.txt'",
-                "2. Jeśli posiadasz plik 'requirements.txt', przeciągnij i upuść go tutaj i naciśnij Enter, w przeciwnym wypadku po prostu naciśnij Enter",
-                "",
-                "Plik: ",
-                is_dir=False,
-                allow_empty=True,
-            )
-        except Exception as e:
-            return press_enter_to_continue(str(e))
+        os.system("git pull")
+        os.system(f"{PYTHON_PATH} -m pip install -r requirements.txt")
 
-        if requirements_path != "":
-            if not requirements_path.endswith("requirements.txt"):
-                return press_enter_to_continue(
-                    "Podany plik nie jest plikiem 'requirements.txt'"
-                )
-
-            clear_screen()
-            os.system(f"{PYTHON_PATH} -m pip install -r '{requirements_path}'")
-
-        clear_screen()
-        try:
-            main_path = path_dnd_input(
-                "1. Przeciągnij i upuść plik 'main.py' tutaj",
-                "2. Naciśnij Enter",
-                "",
-                "Plik: ",
-                is_dir=False,
-            )
-        except Exception as e:
-            return press_enter_to_continue(str(e))
-
-        if not main_path.endswith("main.py"):
-            return press_enter_to_continue("Podany plik nie jest plikiem 'main.py'")
-
-        os.system(f"cp '{main_path}' {SCRIPT_PATH}")
-
-        press_enter_to_continue("Zaktualizowano skrypt!\nUruchom skrypt ponownie")
+        press_enter_to_continue("Zaktualizowano!\nUruchom skrypt ponownie")
         exit()

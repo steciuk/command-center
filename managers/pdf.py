@@ -2,6 +2,7 @@ import os
 
 from pypdf import PdfMerger
 
+from menu import Menu
 from utils import (
     clear_screen,
     multiple_files_input,
@@ -11,44 +12,15 @@ from utils import (
 
 
 class PdfManager:
-    def menu(self):
-        while True:
-            clear_screen()
-            print("Witaj w menedżerze PDFów!")
-            print("===========================================")
-
-            options = []
-
-            options.append({"label": "Wróć", "action": lambda: None})
-            options.append({"label": "Połącz dokumenty PDF", "action": self.merge_pdfs})
-            options.append(
-                {"label": "Konwertuj dokumenty do PDF", "action": self.convert_to_pdf}
-            )
-            options.append(
-                {
-                    "label": "Konwertuj dokumenty do PDF i połącz",
-                    "action": self.convert_and_merge,
-                }
-            )
-
-            for i, option in enumerate(options):
-                print(f"{i}. {option['label']}")
-
-            last_selected = input("\nWybierz opcję i naciśnij Enter: ")
-
-            try:
-                last_selected = int(last_selected)
-                if last_selected == 0:
-                    return
-                if last_selected < 0 or last_selected >= len(options):
-                    continue
-            except ValueError:
-                continue
-
-            try:
-                options[last_selected]["action"]()
-            except Exception as e:
-                press_enter_to_continue(f"{str(e)}\n\nWystąpił krytyczny błąd")
+    def __init__(self):
+        self.menu = (
+            Menu()
+            .with_header("Witaj w menedżerze PDFów!")
+            .with_return()
+            .with_action("Połącz dokumenty PDF", self.merge_pdfs)
+            .with_action("Konwertuj dokumenty do PDF", self.convert_to_pdf)
+            .with_action("Konwertuj dokumenty do PDF i połącz", self.convert_and_merge)
+        )
 
     def merge_pdfs(self, document_paths=None):
         if document_paths is None:
@@ -143,8 +115,6 @@ class PdfManager:
         converted_files = self.convert_to_pdf(save=False)
 
         if converted_files is None or len(converted_files) == 0:
-            return press_enter_to_continue(
-                "Nie udało się skonwertować dokumentów do PDF"
-            )
+            return
 
         self.merge_pdfs(converted_files)

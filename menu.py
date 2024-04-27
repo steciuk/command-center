@@ -72,12 +72,13 @@ class Menu:
             print("Brak opcji do wyświetlenia")
             return
 
+        self.__current_option = 0
+
         try:
             try:
                 stdscr = init_curses()
                 stdscr = self.__run(stdscr)
             except Exception as e:
-                end_curses(stdscr)
                 raise e
             finally:
                 end_curses(stdscr)

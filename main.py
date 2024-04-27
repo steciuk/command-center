@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 from managers.pdf import PdfManager
 from managers.plex import PlexManager
-from managers.script import ScriptUpdater
+from managers.script import ScriptGitUpdater
 from managers.shutdown import ShutdownManager
 from managers.subtitles import SubtitlesManager
 from managers.fonts import FontManager
 
-from utils import clear_screen, press_enter_to_continue
+from menu import Menu
 
 
 def main():
@@ -14,73 +14,46 @@ def main():
     plex_manager = PlexManager()
     subtitles_downloader = SubtitlesManager()
     pdfs_manager = PdfManager()
-    script_updater = ScriptUpdater()
+    script_updater = ScriptGitUpdater()
     fonts_manager = FontManager()
 
-    while True:
-        clear_screen()
-        print("Witaj! Jak mogę dzisiaj pomóc?")
-        print("===========================================")
-        if shutdown_manager.scheduled:
-            print(f"Wyłączenie komputera zaplanowane na {shutdown_manager.scheduled}")
-        if plex_manager.plex_present:
-            print(f"Plex: {'ON' if plex_manager.plex_running else 'OFF'}")
-        print("===========================================")
+    menu = Menu()
+    menu.with_header("Witaj! Jak mogę dzisiaj pomóc?").with_header(
+        "===========================================",
+        lambda: plex_manager.plex_present or shutdown_manager.scheduled,
+    ).with_header(
+        lambda: f"Zaplanowane wyłączenie: {shutdown_manager.scheduled}",
+        lambda: shutdown_manager.scheduled,
+    ).with_header(
+        lambda: f"Plex: {'ON' if plex_manager.plex_running else 'OFF'}",
+        lambda: plex_manager.plex_present,
+    ).with_action(
+        "Zaplanuj wyłączenie komputera",
+        shutdown_manager.schedule_shutdown,
+        lambda: not shutdown_manager.scheduled,
+    ).with_action(
+        "Anuluj wyłączenie komputera",
+        shutdown_manager.cancel_shutdown,
+        lambda: shutdown_manager.scheduled,
+    ).with_submenu(
+        "Pobierz napisy", subtitles_downloader.menu
+    ).with_action(
+        "Zainstaluj czcionki", fonts_manager.install_fonts
+    ).with_submenu(
+        "Zarządzaj PDFami", pdfs_manager.menu
+    ).with_action(
+        "Wyłącz Plex",
+        plex_manager.stop_plex,
+        lambda: plex_manager.plex_present and plex_manager.plex_running,
+    ).with_action(
+        "Włącz Plex",
+        plex_manager.start_plex,
+        lambda: plex_manager.plex_present and not plex_manager.plex_running,
+    ).with_submenu(
+        "Zaktualizuj skrypt", script_updater.menu
+    ).with_exit()
 
-        options = []
-
-        options.append({"label": "Wyjdź", "action": exit})
-
-        if shutdown_manager.scheduled:
-            options.append(
-                {
-                    "label": "Anuluj wyłączenie komputera",
-                    "action": shutdown_manager.cancel_shutdown,
-                }
-            )
-        else:
-            options.append(
-                {
-                    "label": "Zaplanuj wyłączenie komputera",
-                    "action": shutdown_manager.schedule_shutdown,
-                }
-            )
-
-        if plex_manager.plex_present:
-            if plex_manager.plex_running:
-                options.append(
-                    {"label": "Wyłącz Plex", "action": plex_manager.stop_plex}
-                )
-            else:
-                options.append(
-                    {"label": "Włącz Plex", "action": plex_manager.start_plex}
-                )
-
-        options.append({"label": "Pobierz napisy", "action": subtitles_downloader.menu})
-        options.append(
-            {"label": "Zainstaluj czcionki", "action": fonts_manager.install_fonts}
-        )
-        options.append(
-            {"label": "Zaktualizuj skrypt", "action": script_updater.update_script}
-        )
-        options.append({"label": "Zarządzaj PDFami", "action": pdfs_manager.menu})
-
-        for i, option in enumerate(options):
-            print(f"{i}. {option['label']}")
-
-        last_selected = input("\nWybierz opcję i naciśnij Enter: ")
-
-        try:
-            last_selected = int(last_selected)
-            if last_selected < 0 or last_selected >= len(options):
-                continue
-        except ValueError:
-            continue
-
-        try:
-            options[last_selected]["action"]()
-        except Exception as e:
-            press_enter_to_continue(f"{str(e)}\n\nWystąpił krytyczny błąd")
+    menu.run()
 
 
 if __name__ == "__main__":

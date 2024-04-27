@@ -1,50 +1,20 @@
 import time
 import cv2
 from napi import NapiPy
+from menu import Menu
 from utils import clear_screen, path_dnd_input, press_enter_to_continue
 
 
 class SubtitlesManager:
     def __init__(self):
         self.napi = NapiPy()
-
-    def menu(self):
-        clear_screen()
-        print("Witaj w pobieraczu napisów!")
-        print("===========================================")
-
-        options = []
-
-        options.append({"label": "Wróć", "action": lambda: None})
-        options.append(
-            {
-                "label": "Pobierz napisy automatycznie",
-                "action": self.download_subtitles_auto,
-            }
+        self.menu = (
+            Menu()
+            .with_header("Witaj w pobieraczu napisów!")
+            .with_return()
+            .with_action("Pobierz napisy automatycznie", self.download_subtitles_auto)
+            .with_action("Pobierz napisy ręcznie", self.download_subtitles_manual)
         )
-        options.append(
-            {
-                "label": "Pobierz napisy ręcznie",
-                "action": self.download_subtitles_manual,
-            }
-        )
-
-        for i, option in enumerate(options):
-            print(f"{i}. {option['label']}")
-
-        last_selected = input("\nWybierz opcję i naciśnij Enter: ")
-
-        try:
-            last_selected = int(last_selected)
-            if last_selected <= 0 or last_selected >= len(options):
-                return
-        except ValueError:
-            return
-
-        try:
-            options[last_selected]["action"]()
-        except Exception as e:
-            press_enter_to_continue(f"{str(e)}\n\nWystąpił krytyczny błąd")
 
     def display_movie_fps_and_duration(self, path):
         cap = cv2.VideoCapture(path)
