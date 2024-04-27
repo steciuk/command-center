@@ -49,8 +49,10 @@ class ScriptGitUpdater:
             )
             return
 
-        diff_output = self.__run_git_command("diff HEAD origin/main").read()
-        if diff_output:
+        are_updates = self.__run_git_command(
+            "diff --raw HEAD origin/main | (test ! -s && exit 1)"
+        )
+        if are_updates:
             self.__are_updates = True
         else:
             press_enter_to_continue("Brak dostępnych aktualizacji")
