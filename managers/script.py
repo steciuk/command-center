@@ -10,9 +10,7 @@ class ScriptGitUpdater:
         if not self.__is_git_installed():
             self.menu = (
                 Menu()
-                .with_header(
-                    "Do zaktualizowania skryptu wymagane jest zainstalowanie Git'a"
-                )
+                .with_header("Do zaktualizowania skryptu wymagany jest Git")
                 .with_return()
             )
         else:
@@ -47,6 +45,8 @@ class ScriptGitUpdater:
         diff_output = os.popen("git diff HEAD origin/master").read()
         if diff_output:
             self.__are_updates = True
+        else:
+            press_enter_to_continue("Brak dostępnych aktualizacji")
 
     def __update_script(self):
         SCRIPT_PATH = os.path.dirname(__file__)

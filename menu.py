@@ -68,10 +68,6 @@ class Menu:
         return self
 
     def run(self):
-        if len(self.__options) == 0:
-            print("Brak opcji do wyświetlenia")
-            return
-
         self.__current_option = 0
 
         try:
