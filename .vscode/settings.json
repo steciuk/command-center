@@ -1,5 +1,7 @@
 {
   "cSpell.words": [
+    "addstr",
+    "getch",
     "getuid",
     "gmtime",
     "lowriter",
@@ -12,6 +14,8 @@
     "pobieraczu",
     "Polciu",
     "pypdf",
+    "reinit",
+    "stdscr",
     "ttfs"
   ]
 }

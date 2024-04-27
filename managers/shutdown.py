@@ -21,7 +21,7 @@ class ShutdownManager:
         return None
 
     def schedule_shutdown(self):
-        clear_screen()
+        # clear_screen()
         num_hours = input("Za ile godzin wyłączyć komputer? (0 - wróć): ")
 
         try:

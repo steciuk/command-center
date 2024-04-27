@@ -1,4 +1,25 @@
 import os
+import curses
+
+
+def init_curses():
+    stdscr = curses.initscr()
+    curses.start_color()
+    curses.use_default_colors()
+    curses.noecho()
+    curses.cbreak()
+    stdscr.keypad(True)
+    curses.curs_set(0)
+    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
+    return stdscr
+
+
+def end_curses(stdscr):
+    curses.nocbreak()
+    stdscr.keypad(False)
+    curses.echo()
+    curses.endwin()
+    clear_screen()
 
 
 def clear_screen():
