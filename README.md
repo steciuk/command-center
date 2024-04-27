@@ -20,19 +20,23 @@ Unfortunately, the program is in Polish (and the instructions are more than over
 ```
 git clone https://github.com/steciuk/command-center.git
 ```
-2. Install python3-dev package (otherwise, subtitles downloading won't work)
+2. Enter the directory
+```
+cd command-center
+```
+3. Install python3-dev package (otherwise, subtitles downloading won't work)
 ```
 sudo apt install python3-dev
 ```
-3. Create a virtual environment (otherwise, script updating won't work)
+4. Create a virtual environment (otherwise, script updating won't work)
 ```
 python3 -m venv .venv
 ```
-4. Install the required python packages
+5. Install the required python packages
 ```
 .venv/bin/python3 -m pip install -r requirements.txt
 ```
-5. Run the script!
+6. Run the script!
 ```
 .venv/bin/python3 main.py
 ```
