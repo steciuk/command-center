@@ -2,6 +2,9 @@ import os
 import curses
 
 
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
 def init_curses():
     stdscr = curses.initscr()
     curses.start_color()

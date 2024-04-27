@@ -1,6 +1,6 @@
 import os
 from menu import Menu
-from utils import press_enter_to_continue
+from utils import ROOT_DIR, press_enter_to_continue
 
 
 class ScriptGitUpdater:
@@ -39,14 +39,17 @@ class ScriptGitUpdater:
     def __is_git_installed(self):
         return os.system("which git > /dev/null") == 0
 
+    def __run_git_command(self, command):
+        return os.system(f"git --git-dir={os.path.join(ROOT_DIR, '.git')} {command}")
+
     def __check_updates_available(self):
-        if os.system("git fetch") != 0:
+        if self.__run_git_command("fetch") != 0:
             press_enter_to_continue(
                 "Nie udało się sprawdzić dostępnych aktualizacji\nCzy sklonowałeś repozytorium?"
             )
             return
 
-        diff_output = os.popen("git diff HEAD origin/main").read()
+        diff_output = self.__run_git_command("diff HEAD origin/main").read()
         if diff_output:
             self.__are_updates = True
         else:
@@ -55,7 +58,7 @@ class ScriptGitUpdater:
     def __update_script(self):
         python_path = os.path.join(os.path.dirname(__file__), ".venv/bin/python3")
 
-        if os.system("git pull") != 0:
+        if self.__run_git_command("reset --hard") != 0:
             press_enter_to_continue("Nie udało się zaktualizować skryptu")
             return
 
