@@ -1,4 +1,5 @@
 import os
+
 from menu import Menu
 from utils import ROOT_DIR, press_enter_to_continue
 
@@ -40,9 +41,10 @@ class ScriptGitUpdater:
         return os.system("which git > /dev/null") == 0
 
     def __run_git_command(self, command):
-        return os.system(
-            f"git --git-dir={os.path.join(ROOT_DIR, '.git')} --work-tree={ROOT_DIR} {command}"
-        )
+        return os.system(self.__get_git_command(command))
+
+    def __get_git_command(self, command):
+        return f"git --git-dir={os.path.join(ROOT_DIR, '.git')} --work-tree={ROOT_DIR} {command}"
 
     def __check_updates_available(self):
         if self.__run_git_command("fetch") != 0:
@@ -51,9 +53,8 @@ class ScriptGitUpdater:
             )
             return
 
-        are_updates = self.__run_git_command(
-            "diff --raw HEAD origin/main | (test ! -s && exit 1 || exit 0)"
-        )
+        git_command = self.__get_git_command("diff --raw HEAD origin/main")
+        are_updates = os.system(f'test ! -s "$({git_command})" && exit 1 || exit 0')
         if are_updates:
             self.__are_updates = True
         else:
