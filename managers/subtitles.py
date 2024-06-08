@@ -1,6 +1,9 @@
+import os
 import time
+
 import cv2
 from napi import NapiPy
+
 from menu import Menu
 from utils import clear_screen, path_dnd_input, press_enter_to_continue
 
@@ -14,6 +17,9 @@ class SubtitlesManager:
             .with_return()
             .with_action("Pobierz napisy automatycznie", self.download_subtitles_auto)
             .with_action("Pobierz napisy ręcznie", self.download_subtitles_manual)
+            .with_action(
+                "Pobierz napisy dla całego folderu", self.download_subtitles_folder
+            )
         )
 
     def display_movie_fps_and_duration(self, path):
@@ -116,3 +122,56 @@ class SubtitlesManager:
             return press_enter_to_continue("Poprawnie pobrano napisy!")
 
         return press_enter_to_continue("Nie udało się pobrać napisów")
+
+    def download_subtitles_folder(self):
+        clear_screen()
+
+        try:
+            folder_path = path_dnd_input(
+                "1. Przeciągnij i upuść tutaj folder z filmami",
+                "2. Naciśnij Enter",
+                "",
+                "Folder: ",
+                is_dir=True,
+            )
+        except Exception as e:
+            return press_enter_to_continue(str(e))
+
+        files = [
+            file
+            for file in os.listdir(folder_path)
+            if file.endswith((".mkv", ".mp4", ".avi"))
+        ]
+
+        if not files:
+            return press_enter_to_continue("W podanym folderze nie znaleziono filmów")
+
+        clear_screen()
+        print(f"Pobieranie napisów dla {len(files)} filmów\n")
+
+        successfully_downloaded = []
+        failed_to_download = []
+
+        for file in files:
+            movie_path = os.path.join(folder_path, file)
+            subs_hash = self.napi.calc_hash(movie_path)
+            _, _, subtitles = self.napi.download_subs(subs_hash)
+
+            if subtitles:
+                self.napi.move_subs_to_movie(subtitles, movie_path)
+                successfully_downloaded.append(file)
+            else:
+                failed_to_download.append(file)
+
+        clear_screen()
+        if successfully_downloaded:
+            message = "Poprawnie pobrano napisy dla:\n" + "\n".join(
+                [f"- {file}" for file in successfully_downloaded]
+            )
+            press_enter_to_continue(message)
+
+        if failed_to_download:
+            message = "Nie udało się pobrać napisów dla:\n" + "\n".join(
+                [f"- {file}" for file in failed_to_download]
+            )
+            press_enter_to_continue(message)
