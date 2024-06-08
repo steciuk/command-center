@@ -54,7 +54,7 @@ class ScriptGitUpdater:
             return
 
         git_command = self.__get_git_command("diff --raw HEAD origin/main")
-        are_updates = os.system(f'test ! -s "$({git_command})" && exit 1 || exit 0')
+        are_updates = os.system(f'test -n "$({git_command})" && exit 1 || exit 0')
         if are_updates:
             self.__are_updates = True
         else:
