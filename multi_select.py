@@ -4,9 +4,13 @@ from utils import end_curses, init_curses
 
 
 class MultiSelect:
-    def __init__(self, options, header=None):
+    def __init__(self, options, header=None, selected_by_default=False):
         self.__options = [
-            {"label": option["label"], "value": option["value"], "selected": False}
+            {
+                "label": option["label"],
+                "value": option["value"],
+                "selected": selected_by_default,
+            }
             for option in options
         ]
         self.__header = header
@@ -18,8 +22,8 @@ class MultiSelect:
         try:
             stdscr = init_curses()
             selected = self.__get(stdscr)
-        except KeyboardInterrupt:
-            pass
+        except KeyboardInterrupt as e:
+            raise e
         finally:
             end_curses(stdscr)
 

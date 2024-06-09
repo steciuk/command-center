@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
+from managers.fonts import FontManager
 from managers.pdf import PdfManager
 from managers.plex import PlexManager
 from managers.script import ScriptGitUpdater
 from managers.shutdown import ShutdownManager
 from managers.subtitles import SubtitlesManager
-from managers.fonts import FontManager
-
 from menu import Menu
 
 
@@ -57,4 +56,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass

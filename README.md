@@ -7,7 +7,8 @@ This handy tool offers a range of utilities specially tailored for my dad:
 - Automatically or manually download Polish subtitles from [napiprojekt](https://www.napiprojekt.pl/)
 - Install `OTF` and `TTF` fonts (or uninstall previously installed ones)
 - Convert `.doc`, `.docx`, `.odt`, `.odf` files to PDF
-- Merge multiple PDF files into one
+- Merge multiple PDF files into one (sequentially)
+- Mix pdf pages (e.g., 1st page from file A, 2nd page from file B, etc.)
 - Turn [Plex](https://www.plex.tv/) on or off (if installed)
 - Automatically update the script via Git (if the repository has been cloned)
 

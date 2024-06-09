@@ -1,8 +1,6 @@
 import os
 import time
 
-from utils import clear_screen
-
 
 class ShutdownManager:
     __SHUTDOWN_SCHEDULE_PATH = "/run/systemd/shutdown/scheduled"

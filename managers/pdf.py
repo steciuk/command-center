@@ -1,8 +1,10 @@
 import os
 
-from pypdf import PdfMerger
+from pypdf import PdfMerger, PdfReader, PdfWriter
 
+from arrange import Arrange
 from menu import Menu
+from multi_select import MultiSelect
 from utils import (
     clear_screen,
     multiple_files_input,
@@ -20,7 +22,71 @@ class PdfManager:
             .with_action("Połącz dokumenty PDF", self.merge_pdfs)
             .with_action("Konwertuj dokumenty do PDF", self.convert_to_pdf)
             .with_action("Konwertuj dokumenty do PDF i połącz", self.convert_and_merge)
+            .with_action("Zmieszaj dokumenty PDF", self.mix_pdfs)
         )
+
+    def mix_pdfs(self):
+        document_paths = multiple_files_input(
+            "1. Pojedynczo przeciągaj i upuszczaj pliki do połączenia tutaj",
+            "  - Wspierane formaty: .pdf",
+            "2. Naciśnij Enter po każdym upuszczonym pliku",
+            "3. Po zakończeniu naciśnij Enter jeszcze raz",
+            allowed_extensions=[".pdf"],
+        )
+
+        if len(document_paths) == 0:
+            return press_enter_to_continue("Nie wybrano żadnych dokumentów")
+
+        pages_to_mix = []
+        readers = {}
+        for document_path in document_paths:
+            reader = PdfReader(document_path)
+            readers[document_path] = reader
+            num_pages = len(reader.pages)
+            for i in range(num_pages):
+                page_name = (
+                    f"{document_path.split('/')[-1]} - Strona {i + 1}/{num_pages}"
+                )
+                pages_to_mix.append(
+                    {
+                        "label": page_name,
+                        "value": (page_name, document_path, i),
+                    }
+                )
+
+        pages_to_mix = MultiSelect(
+            pages_to_mix,
+            "Wybierz strony, które mają zostać połączone w jeden plik PDF",
+            selected_by_default=True,
+        ).get()
+
+        if len(pages_to_mix) == 0:
+            return press_enter_to_continue("Nie wybrano żadnych stron")
+
+        pages_to_mix = Arrange(
+            ({"label": page[0], "value": (page[1], page[2])} for page in pages_to_mix),
+            "Wybierz kolejność stron",
+        ).get()
+
+        writer = PdfWriter()
+        for document_path, page_num in pages_to_mix:
+            writer.append(readers[document_path], pages=[page_num])
+
+        output_path = path_dnd_input(
+            "1. Przeciągnij i upuść folder, do którego ma być zapisany plik PDF",
+            "2. Naciśnij Enter",
+            "",
+            "Folder: ",
+            is_dir=True,
+        )
+
+        file_name = input("Podaj nazwę pliku wyjściowego: ")
+
+        if not file_name.endswith(".pdf"):
+            file_name += ".pdf"
+
+        writer.write(os.path.join(output_path, file_name))
+        press_enter_to_continue("Poprawnie zmieszano wybrane strony w jeden plik PDF!")
 
     def merge_pdfs(self, document_paths=None):
         if document_paths is None:
@@ -44,6 +110,8 @@ class PdfManager:
                 "Folder: ",
                 is_dir=True,
             )
+        except KeyboardInterrupt as e:
+            raise e
         except Exception as e:
             return press_enter_to_continue(str(e))
 
@@ -87,6 +155,8 @@ class PdfManager:
                     "Folder: ",
                     is_dir=True,
                 )
+            except KeyboardInterrupt as e:
+                raise e
             except Exception as e:
                 return press_enter_to_continue(str(e))
         else:

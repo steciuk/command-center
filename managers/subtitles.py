@@ -44,6 +44,8 @@ class SubtitlesManager:
                 "Plik: ",
                 is_dir=False,
             )
+        except KeyboardInterrupt as e:
+            raise e
         except Exception as e:
             return press_enter_to_continue(str(e))
 
@@ -71,6 +73,8 @@ class SubtitlesManager:
                     "Plik: ",
                     is_dir=False,
                 )
+            except KeyboardInterrupt as e:
+                raise e
             except Exception as e:
                 return press_enter_to_continue(str(e))
 
@@ -134,6 +138,8 @@ class SubtitlesManager:
                 "Folder: ",
                 is_dir=True,
             )
+        except KeyboardInterrupt as e:
+            raise e
         except Exception as e:
             return press_enter_to_continue(str(e))
 

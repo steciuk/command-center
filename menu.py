@@ -1,5 +1,5 @@
 import curses
-from typing import Optional, Callable
+from typing import Callable, Optional
 
 from utils import end_curses, init_curses, press_enter_to_continue
 
@@ -78,8 +78,8 @@ class Menu:
                 raise e
             finally:
                 end_curses(stdscr)
-        except KeyboardInterrupt:
-            pass
+        except KeyboardInterrupt as e:
+            raise e
         except Exception as e:
             press_enter_to_continue(f"{str(e)}\n\nWystąpił krytyczny błąd")
 
@@ -173,6 +173,8 @@ class Menu:
                     end_curses(stdscr)
                     try:
                         option["action"]()
+                    except KeyboardInterrupt as e:
+                        raise e
                     except Exception as e:
                         press_enter_to_continue(f"{str(e)}\n\nWystąpił krytyczny błąd")
 

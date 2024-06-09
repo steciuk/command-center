@@ -1,6 +1,5 @@
-import os
 import curses
-
+import os
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -73,6 +72,8 @@ def multiple_files_input(*prompts, allowed_extensions=None):
 
         try:
             file_path = path_dnd_input("", "Plik: ", allow_empty=True, is_dir=False)
+        except KeyboardInterrupt as e:
+            raise e
         except Exception as e:
             press_enter_to_continue(str(e))
             continue
