@@ -1,7 +1,7 @@
-import curses
 from typing import Callable, Optional
 
-from utils import end_curses, init_curses, press_enter_to_continue
+from get_key_press import SpecialKeys, get_key_press
+from utils import clear_screen, press_enter_to_continue, print_special
 
 
 class Menu:
@@ -71,13 +71,7 @@ class Menu:
         self.__current_option = 0
 
         try:
-            try:
-                stdscr = init_curses()
-                stdscr = self.__run(stdscr)
-            except Exception as e:
-                raise e
-            finally:
-                end_curses(stdscr)
+            self.__run()
         except KeyboardInterrupt as e:
             raise e
         except Exception as e:
@@ -101,6 +95,14 @@ class Menu:
 
         self.__footers_to_show.append("↑ ↓ - poruszanie się")
         self.__footers_to_show.append("Enter - wybierz")
+
+        if self.__headers_to_show:
+            self.__headers_to_show.append("===========================================")
+
+        if self.__footers_to_show:
+            self.__footers_to_show.insert(
+                0, "==========================================="
+            )
 
         self.__options_to_show = [
             {
@@ -130,39 +132,35 @@ class Menu:
         if self.__current_option >= len(self.__options_to_show):
             self.__current_option = 0
 
-    def __run(self, stdscr: curses.window) -> curses.window:
+    def __run(self):
         self.__refresh_options()
 
         while True:
-            stdscr.clear()
+            clear_screen()
 
-            if len(self.__headers_to_show) > 0:
-                for header in self.__headers_to_show:
-                    stdscr.addstr(f"{header}\n")
-                stdscr.addstr("===========================================\n")
+            for header in self.__headers_to_show:
+                print(f"{header}")
 
             for i, option in enumerate(self.__options_to_show):
                 if i == self.__current_option:
-                    stdscr.addstr(f"> {option['label']}\n", curses.color_pair(1))
+                    print_special(f"> {option['label']}")
                 else:
-                    stdscr.addstr(f"  {option['label']}\n")
+                    print(f"  {option['label']}")
 
-            if len(self.__footers_to_show) > 0:
-                stdscr.addstr("===========================================\n")
-                for footer in self.__footers_to_show:
-                    stdscr.addstr(f"{footer}\n")
+            for footer in self.__footers_to_show:
+                print(f"{footer}")
 
-            key = stdscr.getch()
+            key = get_key_press()
 
-            if key == curses.KEY_UP:
+            if key == SpecialKeys.UP:
                 self.__current_option = (self.__current_option - 1) % len(
                     self.__options_to_show
                 )
-            elif key == curses.KEY_DOWN:
+            elif key == SpecialKeys.DOWN:
                 self.__current_option = (self.__current_option + 1) % len(
                     self.__options_to_show
                 )
-            elif key == curses.KEY_ENTER or key in [10, 13]:
+            elif key == SpecialKeys.ENTER:
                 option = self.__options_to_show[self.__current_option]
                 if option["type"] == "exit":
                     option["action"]()
@@ -170,7 +168,6 @@ class Menu:
                 elif option["type"] == "return":
                     break
                 elif option["type"] == "action":
-                    end_curses(stdscr)
                     try:
                         option["action"]()
                     except KeyboardInterrupt as e:
@@ -178,12 +175,7 @@ class Menu:
                     except Exception as e:
                         press_enter_to_continue(f"{str(e)}\n\nWystąpił krytyczny błąd")
 
-                    stdscr = init_curses()
                     self.__refresh_options()
                 elif option["type"] == "menu":
-                    end_curses(stdscr)
                     option["action"].run()
-                    stdscr = init_curses()
                     self.__refresh_options()
-
-        return stdscr

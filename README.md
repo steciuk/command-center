@@ -1,6 +1,6 @@
 # Command Center
 
-A Python/curses console application I created for my dad, who bravely switched from Windows to Linux but is still deathly afraid of the terminal.
+A Python console application I created for my dad, who bravely switched from Windows to Linux but is still deathly afraid of the terminal.
 
 This handy tool offers a range of utilities specially tailored for my dad:
 - Schedule computer shutdown

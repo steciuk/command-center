@@ -1,6 +1,8 @@
 import os
 import time
 
+from utils import clear_screen
+
 
 class ShutdownManager:
     __SHUTDOWN_SCHEDULE_PATH = "/run/systemd/shutdown/scheduled"
@@ -19,7 +21,7 @@ class ShutdownManager:
         return None
 
     def schedule_shutdown(self):
-        # clear_screen()
+        clear_screen()
         num_hours = input("Za ile godzin wyłączyć komputer? (0 - wróć): ")
 
         try:

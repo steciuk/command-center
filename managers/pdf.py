@@ -72,6 +72,7 @@ class PdfManager:
         for document_path, page_num in pages_to_mix:
             writer.append(readers[document_path], pages=[page_num])
 
+        clear_screen()
         output_path = path_dnd_input(
             "1. Przeciągnij i upuść folder, do którego ma być zapisany plik PDF",
             "2. Naciśnij Enter",
@@ -80,6 +81,7 @@ class PdfManager:
             is_dir=True,
         )
 
+        clear_screen()
         file_name = input("Podaj nazwę pliku wyjściowego: ")
 
         if not file_name.endswith(".pdf"):

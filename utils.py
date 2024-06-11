@@ -1,27 +1,6 @@
-import curses
 import os
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-
-
-def init_curses():
-    stdscr = curses.initscr()
-    curses.start_color()
-    curses.use_default_colors()
-    curses.noecho()
-    curses.cbreak()
-    stdscr.keypad(True)
-    curses.curs_set(0)
-    curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)
-    return stdscr
-
-
-def end_curses(stdscr):
-    curses.nocbreak()
-    stdscr.keypad(False)
-    curses.echo()
-    curses.endwin()
-    clear_screen()
 
 
 def clear_screen():
@@ -96,3 +75,7 @@ def multiple_files_input(*prompts, allowed_extensions=None):
         file_paths_in_order.append(file_path)
 
     return file_paths_in_order
+
+
+def print_special(text):
+    print("\033[1;7m" + text + "\033[0m")

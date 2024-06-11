@@ -1,6 +1,5 @@
-import curses
-
-from utils import end_curses, init_curses
+from get_key_press import SpecialKeys, get_key_press
+from utils import clear_screen, press_enter_to_continue, print_special
 
 
 class MultiSelect:
@@ -20,25 +19,24 @@ class MultiSelect:
         self.__current_option = 0
         selected = []
         try:
-            stdscr = init_curses()
-            selected = self.__get(stdscr)
+            selected = self.__get()
         except KeyboardInterrupt as e:
             raise e
-        finally:
-            end_curses(stdscr)
+        except Exception as e:
+            press_enter_to_continue(f"{str(e)}\n\nWystąpił krytyczny błąd")
 
         return selected
 
-    def __get(self, stdscr: curses.window) -> list:
+    def __get(self) -> list:
         while True:
-            stdscr.clear()
+            clear_screen()
 
             if self.__header:
-                stdscr.addstr(f"{self.__header}\n")
+                print(f"{self.__header}")
             else:
-                stdscr.addstr("Wybierz opcje\n")
+                print("Wybierz opcje")
 
-            stdscr.addstr("===========================================\n")
+            print("===========================================")
 
             for i, option in enumerate(self.__options):
                 label = (
@@ -48,30 +46,30 @@ class MultiSelect:
                 )
 
                 if i == self.__current_option:
-                    stdscr.addstr(f"> {label}\n", curses.color_pair(1))
+                    print_special(f"> {label}")
                 else:
-                    stdscr.addstr(f"  {label}\n")
+                    print(f"  {label}")
 
-            stdscr.addstr("===========================================\n")
-            stdscr.addstr("↑ ↓ - poruszanie się\n")
-            stdscr.addstr("Spacja - zaznacz/odznacz\n")
-            stdscr.addstr("Enter - zatwierdź\n")
+            print("===========================================")
+            print("↑ ↓ - poruszanie się")
+            print("Spacja - zaznacz/odznacz")
+            print("Enter - zatwierdź")
 
-            key = stdscr.getch()
+            key = get_key_press()
 
-            if key == curses.KEY_UP:
+            if key == SpecialKeys.UP:
                 self.__current_option = (self.__current_option - 1) % len(
                     self.__options
                 )
-            elif key == curses.KEY_DOWN:
+            elif key == SpecialKeys.DOWN:
                 self.__current_option = (self.__current_option + 1) % len(
                     self.__options
                 )
-            elif key == curses.KEY_ENTER or key in [10, 13]:
+            elif key == SpecialKeys.ENTER:
                 return [
                     option["value"] for option in self.__options if option["selected"]
                 ]
-            elif key == ord(" "):
+            elif key == SpecialKeys.SPACE:
                 self.__options[self.__current_option]["selected"] = not self.__options[
                     self.__current_option
                 ]["selected"]

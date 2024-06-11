@@ -1,6 +1,5 @@
-import curses
-
-from utils import end_curses, init_curses
+from get_key_press import SpecialKeys, get_key_press
+from utils import clear_screen, print_special
 
 
 class Arrange:
@@ -20,46 +19,43 @@ class Arrange:
         self.__current_option = 0
         selected = []
         try:
-            stdscr = init_curses()
-            selected = self.__get(stdscr)
+            self.__get()
         except KeyboardInterrupt as e:
             raise e
-        finally:
-            end_curses(stdscr)
 
         return selected
 
-    def __get(self, stdscr):
+    def __get(self):
         while True:
-            stdscr.clear()
+            clear_screen()
 
             if self.__header:
-                stdscr.addstr(f"{self.__header}\n")
+                print(f"{self.__header}")
             else:
-                stdscr.addstr("Uporządkuj elementy\n")
+                print("Uporządkuj elementy")
 
-            stdscr.addstr("===========================================\n")
+            print("===========================================")
 
             for i, option in enumerate(self.__options):
                 label = f"{option['label']}"
 
                 if i == self.__current_option:
                     if self.__is_option_selected:
-                        stdscr.addstr(f"  > {label}\n", curses.color_pair(1))
+                        print_special(f"  > {label}")
                     else:
-                        stdscr.addstr(f"> {label}\n", curses.color_pair(1))
+                        print_special(f"> {label}")
 
                 else:
-                    stdscr.addstr(f"  {label}\n")
+                    print(f"  {label}")
 
-            stdscr.addstr("===========================================\n")
-            stdscr.addstr("↑ ↓ - poruszanie się\n")
-            stdscr.addstr("Spacja - wybierz/upuść element do przesunięcia\n")
-            stdscr.addstr("Enter - zatwierdź\n")
+            print("===========================================")
+            print("↑ ↓ - poruszanie się")
+            print("Spacja - wybierz/upuść element do przesunięcia")
+            print("Enter - zatwierdź")
 
-            key = stdscr.getch()
+            key = get_key_press()
 
-            if key == curses.KEY_UP:
+            if key == SpecialKeys.UP:
                 if self.__is_option_selected:
                     if self.__current_option <= 0:
                         self.__current_option = 0
@@ -74,7 +70,7 @@ class Arrange:
                     self.__current_option = (self.__current_option - 1) % len(
                         self.__options
                     )
-            elif key == curses.KEY_DOWN:
+            elif key == SpecialKeys.DOWN:
                 if self.__is_option_selected:
                     if self.__current_option >= len(self.__options) - 1:
                         self.__current_option = len(self.__options) - 1
@@ -89,7 +85,7 @@ class Arrange:
                     self.__current_option = (self.__current_option + 1) % len(
                         self.__options
                     )
-            elif key == curses.KEY_ENTER or key in [10, 13]:
+            elif key == SpecialKeys.ENTER:
                 return [option["value"] for option in self.__options]
-            elif key == ord(" "):
+            elif key == SpecialKeys.SPACE:
                 self.__is_option_selected = not self.__is_option_selected
