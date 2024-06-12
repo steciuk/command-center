@@ -12,23 +12,16 @@ class SpecialKeys:
     SPACE = " "
 
 
-def get_char():
+def get_key_press():
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
     try:
         tty.setraw(sys.stdin.fileno())
-        ch = sys.stdin.read(1)
+        key = sys.stdin.read(1)
+        if key == "\x1b":
+            key += sys.stdin.read(2)
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-    return ch
-
-
-def get_key_press():
-    key = get_char()
-
-    if key == "\x1b":
-        key += get_char()
-        key += get_char()
 
     if key == "\x03":
         raise KeyboardInterrupt
