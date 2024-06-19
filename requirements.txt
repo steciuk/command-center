@@ -1,6 +1,7 @@
 ansiwrap==0.8.4
+chardet==5.2.0
 console-menu==0.8.0
-napi-py==1.1.4
+napi-py==1.2.3
 numpy==1.26.4
 opencv-python==4.9.0.80
 pylzma==0.5.0
