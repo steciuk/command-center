@@ -19,7 +19,7 @@ class Arrange:
         self.__current_option = 0
         selected = []
         try:
-            self.__get()
+            selected = self.__get()
         except KeyboardInterrupt as e:
             raise e
 
