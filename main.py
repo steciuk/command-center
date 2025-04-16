@@ -9,7 +9,7 @@ from menu import Menu
 
 def main():
     shutdown_manager = ShutdownManager()
-    subtitles_downloader = SubtitlesManager()
+    subtitles_manager = SubtitlesManager()
     pdfs_manager = PdfManager()
     script_updater = ScriptGitUpdater()
     fonts_manager = FontManager()
@@ -30,7 +30,7 @@ def main():
         shutdown_manager.cancel_shutdown,
         lambda: shutdown_manager.scheduled,
     ).with_submenu(
-        "Pobierz napisy", subtitles_downloader.menu
+        "Zarządzaj napisami", subtitles_manager.menu
     ).with_submenu(
         "Zarządzaj czcionkami", fonts_manager.menu
     ).with_submenu(

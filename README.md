@@ -5,6 +5,7 @@ A Python console application I created for my dad, who bravely switched from Win
 This handy tool offers a range of utilities specially tailored for my dad:
 - Schedule computer shutdown
 - Automatically or manually download Polish subtitles from [napiprojekt](https://www.napiprojekt.pl/)
+- Synchronize subtitles with the video file (using [`alass`](https://github.com/kaegi/alass), if installed)
 - Install `OTF` and `TTF` fonts (or uninstall previously installed ones)
 - Convert `.doc`, `.docx`, `.odt`, `.odf` files to PDF
 - Merge multiple PDF files into one (sequentially)

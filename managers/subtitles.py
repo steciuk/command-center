@@ -20,7 +20,51 @@ class SubtitlesManager:
             .with_action(
                 "Pobierz napisy dla całego folderu", self.download_subtitles_folder
             )
+            .with_action(
+                "Dopasuj chronometraż napisów do filmu",
+                self.adjust_subs_timing,
+                lambda: os.system("which alass > /dev/null") == 0,
+            )
         )
+
+    def adjust_subs_timing(self):
+        clear_screen()
+
+        try:
+            movie_path = path_dnd_input(
+                "1. Przeciągnij i upuść tutaj plik filmu",
+                "2. Naciśnij Enter",
+                "",
+                "Plik: ",
+                is_dir=False,
+            )
+
+            subs_path = movie_path.replace(os.path.splitext(movie_path)[1], ".srt")
+
+            if not os.path.exists(subs_path):
+                raise FileNotFoundError("Nie znaleziono pliku z napisami")
+            if not os.path.isfile(subs_path):
+                raise IsADirectoryError("Niepoprawny plik z napisami")
+
+            bak_subs_path = subs_path.replace(".srt", ".bak.srt")
+            os.rename(subs_path, bak_subs_path)
+
+            result = os.system(f"alass '{movie_path}' '{bak_subs_path}' '{subs_path}'")
+
+            if result != 0:
+                os.rename(bak_subs_path, subs_path)
+                print("Błąd podczas dopasowywania napisów")
+                input()
+                return
+
+            return press_enter_to_continue(
+                "Poprawnie dopasowany chronometraż napisów do filmu!\n"
+            )
+
+        except KeyboardInterrupt as e:
+            raise e
+        except Exception as e:
+            return press_enter_to_continue(str(e))
 
     def display_movie_fps_and_duration(self, path):
         cap = cv2.VideoCapture(path)
