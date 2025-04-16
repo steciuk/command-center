@@ -9,7 +9,6 @@ This handy tool offers a range of utilities specially tailored for my dad:
 - Convert `.doc`, `.docx`, `.odt`, `.odf` files to PDF
 - Merge multiple PDF files into one (sequentially)
 - Mix pdf pages (e.g., 1st page from file A, 2nd page from file B, etc.)
-- Turn [Plex](https://www.plex.tv/) on or off (if installed)
 - Automatically update the script via Git (if the repository has been cloned)
 
 Unfortunately, the program is in Polish (and the instructions are more than overly verbose), adding a touch of linguistic charm to its functionality.
